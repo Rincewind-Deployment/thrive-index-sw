@@ -34,6 +34,7 @@ if "selected_lsoa_code" not in st.session_state:
 # Data Loading
 if 'master_gdf' not in st.session_state:
     load_master_data()
+    st.rerun()
 lad_gdf = st.session_state['lad_gdf']
 ward_gdf = st.session_state['ward_gdf']
 lsoa_index_gdf_base = st.session_state['lsoa_index_gdf_base']  # Base geometries
