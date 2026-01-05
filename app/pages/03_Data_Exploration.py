@@ -17,6 +17,7 @@ st.set_page_config(
 # Load Data into Session State
 if 'master_gdf' not in st.session_state:
     load_master_data()
+    st.rerun()
 lad_gdf = st.session_state['lad_gdf']
 ward_gdf = st.session_state['ward_gdf']
 master_gdf = st.session_state['master_gdf']
