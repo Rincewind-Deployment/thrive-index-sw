@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import geopandas as gpd
+import glob
 
 #Page Config
 st.set_page_config(
@@ -31,6 +32,14 @@ VARS_CONFIG = {
 }
 ALL_VARS = [var for sublist in VARS_CONFIG.values() for var in sublist]
 
+def load_chunked_geoparquet(base_name):
+    search_pattern = str(DATA_DIR / f"{base_name}_part*.geoparquet")
+    parts = sorted(glob.glob(search_pattern), key=lambda x: int(x.split('part')[-1].split('.')[0]))
+    if not parts:
+        return None
+    gdfs = [gpd.read_parquet(p) for p in parts]
+    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
+
 # Data Loading
 @st.cache_data
 def load_cluster_data():
@@ -39,10 +48,10 @@ def load_cluster_data():
         return None, None, None
     df = pd.read_parquet(NORMALIZED_DATA_FILE)
     df = df[df['year'] == TARGET_YEAR].set_index('area_code')
-    if not BOUNDARIES_FILE.exists():
-        st.error(f"Boundaries not found at {BOUNDARIES_FILE}")
+    gdf = load_chunked_geoparquet("boundaries_lsoa")
+    if gdf is None:
+        st.error(f"Boundaries not found in {DATA_DIR}")
         return df, None, None
-    gdf = gpd.read_parquet(BOUNDARIES_FILE)
     lad_gdf = None
     if LAD_OUTLINE_FILE.exists():
         lad_gdf = gpd.read_file(LAD_OUTLINE_FILE)
