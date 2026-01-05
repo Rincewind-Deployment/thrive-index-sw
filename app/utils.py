@@ -1,4 +1,3 @@
-# Imports
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -129,20 +128,15 @@ def load_secondary_historical_data():
 
 # Master Data Loader
 @st.cache_data(show_spinner="Loading and preparing all map data...")
-def load_master_data():
+def _internal_load_data():
     """
     Loads all base geographies, the context data, and the final 2024 composite scores.
-    Merges them into a single master_gdf stored in session_state.
+    Returns the objects directly instead of setting session_state.
     """
     # Part 1 - Load base geographic data
     lad_gdf = gpd.read_file(LAD_GDF_FILE).to_crs(4326)
     lsoa_index_gdf_base = load_chunked_geoparquet("boundaries_lsoa").to_crs(4326)
     ward_gdf = gpd.read_file(WARD_GJSON).to_crs(4326)
-
-    # Store base geos in session state
-    st.session_state['lad_gdf'] = lad_gdf
-    st.session_state['ward_gdf'] = ward_gdf
-    st.session_state['lsoa_index_gdf_base'] = lsoa_index_gdf_base
 
     # Part 2 - Load Context Data (Non-imputed annual indicators)
     if not LSOA_CONTEXT_DATA_FILE.exists():
@@ -224,7 +218,18 @@ def load_master_data():
         lambda row: f"{row['WD25NM']} - Neighbourhood {row['neighbourhood_num']}",
         axis=1
     )
+    
+    return lad_gdf, ward_gdf, lsoa_index_gdf_base, master_gdf
 
+def load_master_data():
+    """Wrapper function to load data and assign to session state."""
+    lad_gdf, ward_gdf, lsoa_index_gdf_base, master_gdf = _internal_load_data()
+
+    # Store base geos in session state
+    st.session_state['lad_gdf'] = lad_gdf
+    st.session_state['ward_gdf'] = ward_gdf
+    st.session_state['lsoa_index_gdf_base'] = lsoa_index_gdf_base
+    
     # Store the master gdf in session state
     st.session_state['master_gdf'] = master_gdf
 
