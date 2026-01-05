@@ -7,15 +7,6 @@ from pathlib import Path
 import numpy as np
 import glob
 
-def load_chunked_geoparquet(base_name):
-    search_pattern = str(DATA_DIR / f"{base_name}_part*.geoparquet")
-    parts = sorted(glob.glob(search_pattern), key=lambda x: int(x.split('part')[-1].split('.')[0]))
-    if not parts:
-        st.error(f"Could not find any parts for {base_name} in {DATA_DIR}")
-        return None
-    gdfs = [gpd.read_parquet(p) for p in parts]
-    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
-
 # Constants
 DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 LAD_PALETTE = ["#377eb8", "#e41a1c", "#984ea3", "#ff7f00", "#a65628", "#f781bf", "#999999", "#6a3d9a", "#dede00"]
@@ -35,6 +26,15 @@ HISTORICAL_GP_SCORES_FILE = DATA_DIR / "gp_historical_satisfaction.parquet"
 HISTORICAL_CHILDCARE_FILE = DATA_DIR / "childcare_historical_data.parquet"
 HISTORICAL_PRIMARY_SCORES_FILE = DATA_DIR / "primary_school_historical_data.parquet"
 HISTORICAL_SECONDARY_SCORES_FILE = DATA_DIR / "secondary_school_historical_data.parquet"
+
+def load_chunked_geoparquet(base_name):
+    search_pattern = str(DATA_DIR / f"{base_name}_part*.geoparquet")
+    parts = sorted(glob.glob(search_pattern), key=lambda x: int(x.split('part')[-1].split('.')[0]))
+    if not parts:
+        st.error(f"Could not find any parts for {base_name} in {DATA_DIR}")
+        return None
+    gdfs = [gpd.read_parquet(p) for p in parts]
+    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
 
 # Data Loaders
 @st.cache_data(show_spinner="Loading greenspace areas...")
